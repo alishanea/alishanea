@@ -137,9 +137,9 @@ $ cat nimbleurl/highlights.txt
 
 <div align="center">
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Alishan_Muhammed-%230A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/alishanea)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Alishan_Muhammed-%230A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/alishan-ea/)
 [![GitHub](https://img.shields.io/badge/GitHub-@alishanea-%23181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/alishanea)
-[![Email](https://img.shields.io/badge/Email-Reach_Out-%23EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:your@email.com)
+[![Email](https://img.shields.io/badge/Email-Reach_Out-%23EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:alishanmhd@gmail.com)
 
 </div>
 
