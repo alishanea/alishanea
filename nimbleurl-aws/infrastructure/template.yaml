@@ -1,0 +1,497 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SnapLink - Serverless URL Shortener & Analytics Platform
+  Final Year B.Tech Cloud Computing Project
+  Services: Lambda, API Gateway, DynamoDB, S3, CloudFront, Cognito, CloudWatch
+
+# ==========================================
+# PARAMETERS
+# ==========================================
+Parameters:
+  ProjectName:
+    Type: String
+    Default: snaplink
+    Description: Project name used for resource naming
+
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [dev, staging, prod]
+    Description: Deployment environment
+
+  AdminEmail:
+    Type: String
+    Description: Admin email for alerts and Cognito user pool
+
+# ==========================================
+# GLOBALS (applies to all Lambda functions)
+# ==========================================
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 15
+    MemorySize: 256
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Ref UrlTable
+        ANALYTICS_TABLE: !Ref AnalyticsTable
+        ENVIRONMENT: !Ref Environment
+        PROJECT_NAME: !Ref ProjectName
+    Tracing: Active  # Enable AWS X-Ray tracing
+    Layers:
+      - !Ref DependenciesLayer
+
+# ==========================================
+# RESOURCES
+# ==========================================
+Resources:
+
+  # ------------------------------------------
+  # LAMBDA LAYER (shared dependencies)
+  # ------------------------------------------
+  DependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: !Sub "${ProjectName}-dependencies"
+      Description: Shared Node.js dependencies for all Lambda functions
+      ContentUri: layers/dependencies/
+      CompatibleRuntimes:
+        - nodejs18.x
+      RetentionPolicy: Retain
+
+  # ------------------------------------------
+  # DYNAMODB TABLES
+  # ------------------------------------------
+  UrlTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub "${ProjectName}-urls-${Environment}"
+      BillingMode: PAY_PER_REQUEST     # Serverless billing - no provisioned capacity
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true  # Backup enabled
+      SSESpecification:
+        SSEEnabled: true               # Encryption at rest
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true                  # Auto-expire old links
+      AttributeDefinitions:
+        - AttributeName: shortCode
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: shortCode
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        # Query all links by a user
+        - IndexName: userId-createdAt-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  AnalyticsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: !Sub "${ProjectName}-analytics-${Environment}"
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+      AttributeDefinitions:
+        - AttributeName: pk        # shortCode
+          AttributeType: S
+        - AttributeName: sk        # CLICK#timestamp#random
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # ------------------------------------------
+  # LAMBDA FUNCTIONS
+  # ------------------------------------------
+  ShortenFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-shorten-${Environment}"
+      CodeUri: lambda/shorten/
+      Handler: index.handler
+      Description: Creates short URLs and stores in DynamoDB
+      Environment:
+        Variables:
+          BASE_URL: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UrlTable
+      Events:
+        ShortenPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /shorten
+            Method: POST
+        ShortenOptions:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /shorten
+            Method: OPTIONS
+
+  RedirectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-redirect-${Environment}"
+      CodeUri: lambda/redirect/
+      Handler: index.handler
+      Description: Handles URL redirects and logs click analytics
+      MemorySize: 128             # Small memory for fast cold start
+      Timeout: 5
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UrlTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AnalyticsTable
+      Events:
+        RedirectGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /r/{shortCode}
+            Method: GET
+
+  AnalyticsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-analytics-${Environment}"
+      CodeUri: lambda/analytics/
+      Handler: index.handler
+      Description: Returns click analytics for a short URL
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UrlTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref AnalyticsTable
+      Events:
+        AnalyticsGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /analytics/{shortCode}
+            Method: GET
+
+  ListUrlsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${ProjectName}-list-urls-${Environment}"
+      CodeUri: lambda/list/
+      Handler: index.handler
+      Description: Lists all URLs for a user
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UrlTable
+      Events:
+        ListGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /urls
+            Method: GET
+
+  # ------------------------------------------
+  # API GATEWAY
+  # ------------------------------------------
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "${ProjectName}-api-${Environment}"
+      StageName: !Ref Environment
+      Description: SnapLink REST API
+      TracingEnabled: true          # X-Ray tracing
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 50
+          LoggingLevel: INFO
+          MetricsEnabled: true
+      Cors:
+        AllowMethods: "'GET,POST,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date'"
+        AllowOrigin: !Sub "'https://${CloudFrontDistribution.DomainName}'"
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        AddDefaultAuthorizerToCorsPreflight: false
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt UserPool.Arn
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'*'"
+
+  # ------------------------------------------
+  # S3 - Frontend Hosting
+  # ------------------------------------------
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-frontend-${Environment}-${AWS::AccountId}"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true  # Private - only CloudFront can access
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+
+  # ------------------------------------------
+  # CLOUDFRONT - CDN
+  # ------------------------------------------
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "${ProjectName}-oac"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: !Sub "SnapLink CDN - ${Environment}"
+        Enabled: true
+        DefaultRootObject: index.html
+        HttpVersion: http2
+        IPV6Enabled: true
+        PriceClass: PriceClass_100    # US, Canada, Europe only (cheapest)
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !Ref CloudFrontOriginAccessControl
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # CachingOptimized
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html  # SPA fallback routing
+        Tags:
+          - Key: Project
+            Value: !Ref ProjectName
+
+  # ------------------------------------------
+  # COGNITO - User Authentication
+  # ------------------------------------------
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${ProjectName}-user-pool-${Environment}"
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: true
+      UserPoolTags:
+        Project: !Ref ProjectName
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${ProjectName}-web-client"
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false         # Public client (browser)
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      PreventUserExistenceErrors: ENABLED
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 30
+
+  # ------------------------------------------
+  # CLOUDWATCH - Monitoring & Alerts
+  # ------------------------------------------
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${ProjectName}-alerts-${Environment}"
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AdminEmail
+
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-lambda-errors"
+      AlarmDescription: Alert when Lambda error rate exceeds threshold
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300          # 5 minutes
+      EvaluationPeriods: 2
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref AlertTopic
+      TreatMissingData: notBreaching
+
+  ApiLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${ProjectName}-api-latency"
+      AlarmDescription: Alert when P99 API latency exceeds 2 seconds
+      MetricName: Latency
+      Namespace: AWS/ApiGateway
+      ExtendedStatistic: p99
+      Dimensions:
+        - Name: ApiName
+          Value: !Sub "${ProjectName}-api-${Environment}"
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 2000
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref AlertTopic
+
+  ApplicationDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "${ProjectName}-dashboard-${Environment}"
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "properties": {
+                "title": "Lambda Invocations & Errors",
+                "metrics": [
+                  ["AWS/Lambda", "Invocations", "FunctionName", "${ShortenFunction}"],
+                  ["AWS/Lambda", "Errors", "FunctionName", "${ShortenFunction}"],
+                  ["AWS/Lambda", "Invocations", "FunctionName", "${RedirectFunction}"],
+                  ["AWS/Lambda", "Errors", "FunctionName", "${RedirectFunction}"]
+                ],
+                "period": 300,
+                "stat": "Sum"
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "API Gateway - Request Count & Latency",
+                "metrics": [
+                  ["AWS/ApiGateway", "Count", "ApiName", "${ProjectName}-api-${Environment}"],
+                  ["AWS/ApiGateway", "Latency", "ApiName", "${ProjectName}-api-${Environment}"]
+                ],
+                "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "title": "DynamoDB - Read/Write Capacity",
+                "metrics": [
+                  ["AWS/DynamoDB", "ConsumedReadCapacityUnits", "TableName", "${UrlTable}"],
+                  ["AWS/DynamoDB", "ConsumedWriteCapacityUnits", "TableName", "${UrlTable}"]
+                ],
+                "period": 300
+              }
+            }
+          ]
+        }
+
+# ==========================================
+# OUTPUTS
+# ==========================================
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+    Export:
+      Name: !Sub "${ProjectName}-ApiEndpoint"
+
+  CloudFrontURL:
+    Description: CloudFront distribution URL (frontend)
+    Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+    Export:
+      Name: !Sub "${ProjectName}-CloudFrontURL"
+
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref UserPool
+    Export:
+      Name: !Sub "${ProjectName}-UserPoolId"
+
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref UserPoolClient
+    Export:
+      Name: !Sub "${ProjectName}-UserPoolClientId"
+
+  UrlTableName:
+    Description: DynamoDB URL table name
+    Value: !Ref UrlTable
+    Export:
+      Name: !Sub "${ProjectName}-UrlTable"
+
+  DashboardURL:
+    Description: CloudWatch Dashboard URL
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home#dashboards:name=${ProjectName}-dashboard-${Environment}"

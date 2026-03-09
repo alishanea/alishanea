@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapLink — Serverless URL Shortener</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface2: #1c1c28;
+      --border: #2a2a3d;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --accent3: #43e97b;
+      --text: #e8e8f0;
+      --muted: #6b6b8a;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 40px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,10,15,0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      cursor: pointer;
+    }
+    .nav-tabs { display: flex; gap: 8px; }
+    .nav-tab {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      background: transparent;
+      color: var(--muted);
+    }
+    .nav-tab:hover { color: var(--text); background: var(--surface); }
+    .nav-tab.active { background: var(--accent); color: white; }
+
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding: 80px 20px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(108,99,255,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      color: var(--muted);
+      font-size: 1.1rem;
+      max-width: 500px;
+      margin: 0 auto 40px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: rgba(108,99,255,0.15);
+      border: 1px solid rgba(108,99,255,0.3);
+      border-radius: 99px;
+      font-size: 0.8rem;
+      color: #a59cff;
+      margin-bottom: 24px;
+    }
+
+    /* MAIN CARD */
+    .container { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .card h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; color: var(--text); }
+
+    /* FORM */
+    .input-group { display: flex; gap: 12px; margin-bottom: 16px; }
+    .input-wrap { flex: 1; position: relative; }
+    .input-wrap label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    input[type=text], input[type=url] {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type=text]:focus, input[type=url]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.1);
+    }
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .btn {
+      padding: 13px 28px;
+      border-radius: 8px;
+      border: none;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #8b85ff);
+      color: white;
+      width: 100%;
+      justify-content: center;
+      padding: 14px;
+      font-size: 1rem;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(108,99,255,0.35); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-sm:hover { color: var(--text); border-color: var(--accent); }
+    .btn-danger { color: var(--accent2); }
+    .btn-danger:hover { border-color: var(--accent2); }
+
+    /* RESULT */
+    .result-box {
+      background: rgba(67,233,123,0.08);
+      border: 1px solid rgba(67,233,123,0.25);
+      border-radius: 10px;
+      padding: 20px;
+      display: none;
+    }
+    .result-box.show { display: block; animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    .result-url {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      color: var(--accent3);
+      font-weight: 500;
+      word-break: break-all;
+      margin-bottom: 12px;
+    }
+    .result-meta { font-size: 0.8rem; color: var(--muted); }
+    .result-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+    /* URLS TABLE */
+    .urls-list { display: flex; flex-direction: column; gap: 12px; }
+    .url-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+    .url-item:hover { border-color: var(--accent); }
+    .url-shortcode {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .url-original { font-size: 0.85rem; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px; }
+    .url-stats { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+    .url-actions { display: flex; gap: 6px; }
+
+    /* STATS GRID */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+    /* CHARTS */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .chart-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .chart-card h3 { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; font-weight: 500; }
+    .chart-card canvas { max-height: 220px; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      z-index: 999;
+      transform: translateY(80px);
+      transition: transform 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); }
+    .toast.success { background: rgba(67,233,123,0.9); color: #0a2e15; }
+    .toast.error { background: rgba(255,101,132,0.9); color: #2e0a12; }
+    .toast.info { background: rgba(108,99,255,0.9); color: white; }
+
+    /* TABS */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* EMPTY STATE */
+    .empty { text-align: center; padding: 50px; color: var(--muted); }
+    .empty svg { width: 60px; height: 60px; margin-bottom: 16px; opacity: 0.3; }
+
+    /* SPINNER */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ARCHITECTURE SECTION */
+    .arch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .arch-service {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+    .arch-icon { font-size: 2rem; margin-bottom: 10px; }
+    .arch-service h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; }
+    .arch-service p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+    @media (max-width: 600px) {
+      nav { padding: 14px 16px; }
+      .hero { padding: 50px 16px 40px; }
+      .input-group { flex-direction: column; }
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo" onclick="showPage('shorten')">⚡ SnapLink</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('shorten')">Shorten</button>
+    <button class="nav-tab" onclick="showPage('links')">My Links</button>
+    <button class="nav-tab" onclick="showPage('analytics')">Analytics</button>
+    <button class="nav-tab" onclick="showPage('about')">About</button>
+  </div>
+</nav>
+
+<!-- ===== SHORTEN PAGE ===== -->
+<div id="page-shorten" class="page active">
+  <div class="hero">
+    <div class="badge">☁️ Built on AWS Serverless</div>
+    <h1>Shorten URLs with<br/><span>Real-time Analytics</span></h1>
+    <p>Powered by Lambda, API Gateway, DynamoDB & CloudFront. Fast, scalable, and serverless.</p>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2>Create Short Link</h2>
+      <div class="input-wrap" style="margin-bottom:16px">
+        <label>Long URL *</label>
+        <input type="url" id="originalUrl" placeholder="https://example.com/very/long/url/that/needs/shortening" />
+      </div>
+      <div class="input-group">
+        <div class="input-wrap">
+          <label>Custom Alias (optional)</label>
+          <input type="text" id="customAlias" placeholder="my-brand" maxlength="20" />
+        </div>
+        <div class="input-wrap">
+          <label>Expires After</label>
+          <select id="expiresInDays">
+            <option value="7">7 Days</option>
+            <option value="30" selected>30 Days</option>
+            <option value="90">90 Days</option>
+            <option value="365">1 Year</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="shortenBtn" onclick="shortenUrl()">
+        ⚡ Shorten URL
+      </button>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <div class="result-url" id="resultUrl"></div>
+      <div class="result-meta" id="resultMeta"></div>
+      <div class="result-actions">
+        <button class="btn btn-sm" onclick="copyResult()">📋 Copy Link</button>
+        <button class="btn btn-sm" onclick="viewAnalytics()">📊 View Analytics</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MY LINKS PAGE ===== -->
+<div id="page-links" class="page">
+  <div class="container" style="padding-top:40px">
+    <div class="card">
+      <h2>My Links</h2>
+      <div class="urls-list" id="urlsList">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ANALYTICS PAGE ===== -->
+<div id="page-analytics" class="page">
+  <div class="container" style="padding-top:40px">
+    <div class="card">
+      <h2>Analytics Lookup</h2>
+      <div class="input-group">
+        <div class="input-wrap" style="flex:1">
+          <label>Short Code</label>
+          <input type="text" id="analyticsCode" placeholder="e.g. abc123" />
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-sm" style="padding:13px 20px" onclick="loadAnalytics()">Fetch Analytics</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="analyticsResults" style="display:none">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>📈 Clicks Over Last 30 Days</h3>
+          <canvas id="timeseriesChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>📱 Device Breakdown</h3>
+          <canvas id="deviceChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>🌍 Top Countries</h3>
+          <canvas id="countryChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>⏰ Hourly Distribution</h3>
+          <canvas id="hourlyChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ABOUT PAGE ===== -->
+<div id="page-about" class="page">
+  <div class="container" style="padding-top:40px">
+    <div class="card">
+      <h2>AWS Architecture — SnapLink</h2>
+      <p style="color:var(--muted);margin-bottom:24px;font-size:0.9rem">
+        A fully serverless, scalable URL shortener built as a B.Tech Final Year Cloud Computing Project.
+        Uses 7 AWS services in a production-grade architecture.
+      </p>
+      <div class="arch-grid">
+        <div class="arch-service">
+          <div class="arch-icon">🚀</div>
+          <h4>AWS Lambda</h4>
+          <p>4 functions: Shorten, Redirect, Analytics, List. Auto-scales to 0 when idle.</p>
+        </div>
+        <div class="arch-service">
+          <div class="arch-icon">🔌</div>
+          <h4>API Gateway</h4>
+          <p>REST API with Cognito auth, rate limiting (50 RPS), CORS, and request validation.</p>
+        </div>
+        <div class="arch-service">
+          <div class="arch-icon">🗄️</div>
+          <h4>DynamoDB</h4>
+          <p>Two tables: URLs and Analytics. PAY_PER_REQUEST billing + TTL auto-expiry.</p>
+        </div>
+        <div class="arch-service">
+          <div class="arch-icon">🪣</div>
+          <h4>S3</h4>
+          <p>Hosts the static frontend. Private bucket — only accessible via CloudFront.</p>
+        </div>
+        <div class="arch-service">
+          <div class="arch-icon">🌐</div>
+          <h4>CloudFront</h4>
+          <p>Global CDN with HTTPS, HTTP/2, origin access control, and SPA routing support.</p>
+        </div>
+        <div class="arch-service">
+          <div class="arch-icon">🔐</div>
+          <h4>Cognito</h4>
+          <p>User pool with email auth, JWT tokens, and API Gateway authorizer integration.</p>
+        </div>
+        <div class="arch-service">
+          <div class="arch-icon">📊</div>
+          <h4>CloudWatch</h4>
+          <p>Custom dashboard, Lambda error alarms, P99 latency alerts, and SNS notifications.</p>
+        </div>
+        <div class="arch-service">
+          <div class="arch-icon">🔍</div>
+          <h4>X-Ray</h4>
+          <p>Distributed tracing across Lambda and API Gateway for performance profiling.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:0">
+      <h2>Project Highlights for Resume</h2>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:12px">
+        <li style="display:flex;gap:12px;align-items:flex-start">
+          <span style="color:var(--accent3);font-size:1.2rem">✓</span>
+          <div><strong>Infrastructure as Code</strong> — Full AWS SAM CloudFormation template, deployable with a single command</div>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start">
+          <span style="color:var(--accent3);font-size:1.2rem">✓</span>
+          <div><strong>Event-driven & Async</strong> — Click analytics logged asynchronously (fire-and-forget) for sub-50ms redirects</div>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start">
+          <span style="color:var(--accent3);font-size:1.2rem">✓</span>
+          <div><strong>Security Best Practices</strong> — DynamoDB encryption at rest, least-privilege IAM, private S3, HTTPS enforced</div>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start">
+          <span style="color:var(--accent3);font-size:1.2rem">✓</span>
+          <div><strong>Cost Optimized</strong> — Serverless PAY_PER_REQUEST billing. Estimated cost: ~$0/month at low traffic on AWS Free Tier</div>
+        </li>
+        <li style="display:flex;gap:12px;align-items:flex-start">
+          <span style="color:var(--accent3);font-size:1.2rem">✓</span>
+          <div><strong>Observability</strong> — CloudWatch dashboard + alarms + X-Ray tracing = production-grade monitoring</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ===== CONFIG =====
+  const API_BASE = "https://YOUR_API_ID.execute-api.us-east-1.amazonaws.com/prod";
+  // Replace with your deployed API Gateway URL
+
+  // ===== STATE =====
+  let myLinks = JSON.parse(localStorage.getItem('snaplink_urls') || '[]');
+  let lastShortCode = null;
+  let charts = {};
+
+  // ===== NAVIGATION =====
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`page-${name}`).classList.add('active');
+    document.querySelectorAll('.nav-tab')[['shorten','links','analytics','about'].indexOf(name)].classList.add('active');
+    if (name === 'links') renderLinks();
+  }
+
+  // ===== SHORTEN URL =====
+  async function shortenUrl() {
+    const originalUrl = document.getElementById('originalUrl').value.trim();
+    const customAlias = document.getElementById('customAlias').value.trim();
+    const expiresInDays = parseInt(document.getElementById('expiresInDays').value);
+    const btn = document.getElementById('shortenBtn');
+
+    if (!originalUrl) { showToast('Please enter a URL', 'error'); return; }
+    if (!originalUrl.startsWith('http')) { showToast('URL must start with http:// or https://', 'error'); return; }
+
+    btn.innerHTML = '<span class="spinner"></span> Shortening...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`${API_BASE}/shorten`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ originalUrl, customAlias: customAlias || undefined, expiresInDays })
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Failed to shorten URL');
+
+      // Show result
+      document.getElementById('resultUrl').textContent = data.shortUrl;
+      document.getElementById('resultMeta').textContent =
+        `Created: ${new Date(data.createdAt).toLocaleString()} · Expires: ${new Date(data.expiresAt).toLocaleDateString()}`;
+      document.getElementById('resultBox').classList.add('show');
+      lastShortCode = data.shortCode;
+
+      // Save to local state
+      myLinks.unshift({ ...data, clickCount: 0 });
+      localStorage.setItem('snaplink_urls', JSON.stringify(myLinks.slice(0, 50)));
+
+      showToast('Short URL created! 🎉', 'success');
+    } catch (err) {
+      // Demo mode — simulate response
+      const code = customAlias || Math.random().toString(36).slice(2, 8);
+      const shortUrl = `${API_BASE}/r/${code}`;
+      document.getElementById('resultUrl').textContent = shortUrl;
+      document.getElementById('resultMeta').textContent =
+        `Created: ${new Date().toLocaleString()} · Demo Mode (deploy to AWS for live data)`;
+      document.getElementById('resultBox').classList.add('show');
+      lastShortCode = code;
+      myLinks.unshift({ shortCode: code, shortUrl, originalUrl, clickCount: 0, createdAt: new Date().toISOString() });
+      localStorage.setItem('snaplink_urls', JSON.stringify(myLinks.slice(0,50)));
+      showToast('Demo mode: ' + err.message, 'info');
+    } finally {
+      btn.innerHTML = '⚡ Shorten URL';
+      btn.disabled = false;
+    }
+  }
+
+  function copyResult() {
+    const url = document.getElementById('resultUrl').textContent;
+    navigator.clipboard.writeText(url).then(() => showToast('Copied to clipboard!', 'success'));
+  }
+
+  function viewAnalytics() {
+    document.getElementById('analyticsCode').value = lastShortCode;
+    showPage('analytics');
+    loadAnalytics();
+  }
+
+  // ===== MY LINKS =====
+  function renderLinks() {
+    const el = document.getElementById('urlsList');
+    if (!myLinks.length) {
+      el.innerHTML = `<div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        <p>No links yet. Create your first short URL!</p>
+      </div>`;
+      return;
+    }
+    el.innerHTML = myLinks.map(link => `
+      <div class="url-item">
+        <div>
+          <div class="url-shortcode">/${link.shortCode}</div>
+          <div class="url-original">${link.originalUrl}</div>
+          <div class="url-stats">📊 ${link.clickCount || 0} clicks · Created ${new Date(link.createdAt).toLocaleDateString()}</div>
+        </div>
+        <div class="url-actions">
+          <button class="btn btn-sm" onclick="copyLink('${link.shortUrl || API_BASE + '/r/' + link.shortCode}')">📋</button>
+          <button class="btn btn-sm" onclick="openAnalytics('${link.shortCode}')">📊</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteLink('${link.shortCode}')">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => showToast('Copied!', 'success'));
+  }
+
+  function openAnalytics(code) {
+    document.getElementById('analyticsCode').value = code;
+    showPage('analytics');
+    loadAnalytics();
+  }
+
+  function deleteLink(code) {
+    myLinks = myLinks.filter(l => l.shortCode !== code);
+    localStorage.setItem('snaplink_urls', JSON.stringify(myLinks));
+    renderLinks();
+    showToast('Link removed from local list', 'info');
+  }
+
+  // ===== ANALYTICS =====
+  async function loadAnalytics() {
+    const code = document.getElementById('analyticsCode').value.trim();
+    if (!code) { showToast('Enter a short code', 'error'); return; }
+
+    showToast('Loading analytics...', 'info');
+
+    try {
+      const res = await fetch(`${API_BASE}/analytics/${code}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      renderAnalytics(data);
+    } catch (err) {
+      // Demo data for presentation/portfolio
+      renderAnalytics(generateDemoAnalytics(code));
+      showToast('Demo analytics data (deploy to AWS for live data)', 'info');
+    }
+  }
+
+  function generateDemoAnalytics(code) {
+    const days = Array.from({length: 30}, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (29 - i));
+      return { date: d.toISOString().split('T')[0], clicks: Math.floor(Math.random() * 80 + 5) };
+    });
+    return {
+      shortCode: code,
+      originalUrl: 'https://example.com/demo-link',
+      summary: { totalClicks: days.reduce((a,b) => a+b.clicks, 0), uniqueDays: 28, lastClickedAt: new Date().toISOString() },
+      deviceBreakdown: { mobile: 412, desktop: 287, tablet: 63 },
+      topCountries: [
+        {country:'IN',count:280},{country:'US',count:180},{country:'GB',count:95},
+        {country:'DE',count:72},{country:'CA',count:55},{country:'AU',count:40}
+      ],
+      clicksTimeSeries: days,
+      hourlyDistribution: Array.from({length:24},(_,h)=>({hour:h,count:Math.floor(Math.random()*50+5)}))
+    };
+  }
+
+  function renderAnalytics(data) {
+    document.getElementById('analyticsResults').style.display = 'block';
+
+    // Stats
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card"><div class="stat-value">${data.summary.totalClicks.toLocaleString()}</div><div class="stat-label">Total Clicks</div></div>
+      <div class="stat-card"><div class="stat-value">${data.summary.uniqueDays}</div><div class="stat-label">Active Days</div></div>
+      <div class="stat-card"><div class="stat-value">${data.topCountries?.[0]?.country || '—'}</div><div class="stat-label">Top Country</div></div>
+      <div class="stat-card"><div class="stat-value">${Math.round(data.summary.totalClicks / Math.max(data.summary.uniqueDays,1))}</div><div class="stat-label">Avg. Clicks/Day</div></div>
+    `;
+
+    // Destroy old charts
+    Object.values(charts).forEach(c => c.destroy());
+    charts = {};
+
+    const chartDefaults = {
+      color: '#e8e8f0',
+      plugins: { legend: { labels: { color: '#6b6b8a', font: { family: 'Space Grotesk' } } } },
+      scales: { x: { ticks: { color: '#6b6b8a' }, grid: { color: '#2a2a3d' } }, y: { ticks: { color: '#6b6b8a' }, grid: { color: '#2a2a3d' } } }
+    };
+
+    // Time series
+    charts.ts = new Chart(document.getElementById('timeseriesChart'), {
+      type: 'line',
+      data: {
+        labels: data.clicksTimeSeries.map(d => d.date.slice(5)),
+        datasets: [{ label: 'Clicks', data: data.clicksTimeSeries.map(d => d.clicks),
+          borderColor: '#6c63ff', backgroundColor: 'rgba(108,99,255,0.1)',
+          fill: true, tension: 0.4, pointRadius: 2 }]
+      },
+      options: { ...chartDefaults, plugins: { legend: { display: false } } }
+    });
+
+    // Device doughnut
+    const devices = data.deviceBreakdown;
+    charts.dev = new Chart(document.getElementById('deviceChart'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(devices),
+        datasets: [{ data: Object.values(devices), backgroundColor: ['#6c63ff','#43e97b','#ff6584'], borderWidth: 0 }]
+      },
+      options: { plugins: { legend: { labels: { color: '#6b6b8a' } } }, cutout: '65%' }
+    });
+
+    // Countries
+    charts.country = new Chart(document.getElementById('countryChart'), {
+      type: 'bar',
+      data: {
+        labels: data.topCountries.map(c => c.country),
+        datasets: [{ label: 'Clicks', data: data.topCountries.map(c => c.count),
+          backgroundColor: 'rgba(67,233,123,0.7)', borderRadius: 6 }]
+      },
+      options: { ...chartDefaults, plugins: { legend: { display: false } }, indexAxis: 'y' }
+    });
+
+    // Hourly
+    charts.hourly = new Chart(document.getElementById('hourlyChart'), {
+      type: 'bar',
+      data: {
+        labels: data.hourlyDistribution.map(h => `${h.hour}:00`),
+        datasets: [{ label: 'Clicks', data: data.hourlyDistribution.map(h => h.count),
+          backgroundColor: 'rgba(255,101,132,0.7)', borderRadius: 4 }]
+      },
+      options: { ...chartDefaults, plugins: { legend: { display: false } } }
+    });
+  }
+
+  // ===== TOAST =====
+  function showToast(msg, type = 'info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ===== ENTER KEY =====
+  document.getElementById('originalUrl').addEventListener('keydown', e => {
+    if (e.key === 'Enter') shortenUrl();
+  });
+</script>
+</body>
+</html>

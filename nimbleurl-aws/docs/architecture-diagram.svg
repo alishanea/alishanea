@@ -1,0 +1,260 @@
+<svg viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1117"/>
+      <stop offset="100%" style="stop-color:#161b22"/>
+    </linearGradient>
+    <linearGradient id="lambdaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF9900"/>
+      <stop offset="100%" style="stop-color:#e07b00"/>
+    </linearGradient>
+    <linearGradient id="dynGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4053D6"/>
+      <stop offset="100%" style="stop-color:#2d3db8"/>
+    </linearGradient>
+    <linearGradient id="apiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E7157B"/>
+      <stop offset="100%" style="stop-color:#c0105f"/>
+    </linearGradient>
+    <linearGradient id="s3Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7AA116"/>
+      <stop offset="100%" style="stop-color:#5c7a10"/>
+    </linearGradient>
+    <linearGradient id="cfGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8C4FFF"/>
+      <stop offset="100%" style="stop-color:#6b39d4"/>
+    </linearGradient>
+    <linearGradient id="cogGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#C7131F"/>
+      <stop offset="100%" style="stop-color:#a50f19"/>
+    </linearGradient>
+    <linearGradient id="cwGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E7157B"/>
+      <stop offset="100%" style="stop-color:#b50f60"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(0,0,0,0.5)"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#58a6ff" opacity="0.7"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#3fb950" opacity="0.8"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#a371f7" opacity="0.7"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1000" height="680" fill="url(#bgGrad)" rx="16"/>
+
+  <!-- Title -->
+  <text x="500" y="38" text-anchor="middle" fill="#e6edf3" font-size="20" font-weight="700">SnapLink — AWS Serverless Architecture</text>
+  <text x="500" y="58" text-anchor="middle" fill="#8b949e" font-size="12">B.Tech Final Year Cloud Computing Project</text>
+
+  <!-- AWS Region box -->
+  <rect x="60" y="78" width="880" height="560" rx="12" fill="none" stroke="#30363d" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <rect x="72" y="70" width="110" height="20" fill="#161b22"/>
+  <text x="127" y="83" text-anchor="middle" fill="#8b949e" font-size="11">AWS us-east-1</text>
+
+  <!-- ==================== USER ==================== -->
+  <g transform="translate(30, 280)" filter="url(#shadow)">
+    <rect width="90" height="80" rx="10" fill="#21262d" stroke="#30363d" stroke-width="1"/>
+    <text x="45" y="30" text-anchor="middle" font-size="22">👤</text>
+    <text x="45" y="50" text-anchor="middle" fill="#e6edf3" font-size="10" font-weight="600">User</text>
+    <text x="45" y="64" text-anchor="middle" fill="#8b949e" font-size="9">Browser</text>
+  </g>
+
+  <!-- ==================== CLOUDFRONT ==================== -->
+  <g transform="translate(190, 260)" filter="url(#shadow)">
+    <rect width="110" height="90" rx="10" fill="#161b22" stroke="#8C4FFF" stroke-width="1.5"/>
+    <rect x="0" y="0" width="110" height="30" rx="10" fill="url(#cfGrad)" rx="10"/>
+    <rect x="0" y="20" width="110" height="12" fill="url(#cfGrad)"/>
+    <text x="55" y="20" text-anchor="middle" fill="white" font-size="11" font-weight="700">CloudFront</text>
+    <text x="55" y="50" text-anchor="middle" font-size="18">🌐</text>
+    <text x="55" y="70" text-anchor="middle" fill="#8b949e" font-size="9">CDN + HTTPS</text>
+    <text x="55" y="82" text-anchor="middle" fill="#8b949e" font-size="9">HTTP/2 · IPv6</text>
+  </g>
+
+  <!-- ==================== S3 ==================== -->
+  <g transform="translate(190, 120)" filter="url(#shadow)">
+    <rect width="110" height="90" rx="10" fill="#161b22" stroke="#7AA116" stroke-width="1.5"/>
+    <rect x="0" y="0" width="110" height="30" rx="10" fill="url(#s3Grad)"/>
+    <rect x="0" y="20" width="110" height="12" fill="url(#s3Grad)"/>
+    <text x="55" y="20" text-anchor="middle" fill="white" font-size="11" font-weight="700">Amazon S3</text>
+    <text x="55" y="50" text-anchor="middle" font-size="18">🪣</text>
+    <text x="55" y="70" text-anchor="middle" fill="#8b949e" font-size="9">Static Frontend</text>
+    <text x="55" y="82" text-anchor="middle" fill="#8b949e" font-size="9">Private · OAC</text>
+  </g>
+
+  <!-- ==================== API GATEWAY ==================== -->
+  <g transform="translate(380, 260)" filter="url(#shadow)">
+    <rect width="130" height="90" rx="10" fill="#161b22" stroke="#E7157B" stroke-width="1.5"/>
+    <rect x="0" y="0" width="130" height="30" rx="10" fill="url(#apiGrad)"/>
+    <rect x="0" y="20" width="130" height="12" fill="url(#apiGrad)"/>
+    <text x="65" y="20" text-anchor="middle" fill="white" font-size="11" font-weight="700">API Gateway</text>
+    <text x="65" y="50" text-anchor="middle" font-size="18">🔌</text>
+    <text x="65" y="68" text-anchor="middle" fill="#8b949e" font-size="9">REST API · Auth</text>
+    <text x="65" y="80" text-anchor="middle" fill="#8b949e" font-size="9">Rate Limit: 50 RPS</text>
+  </g>
+
+  <!-- ==================== COGNITO ==================== -->
+  <g transform="translate(380, 120)" filter="url(#shadow)">
+    <rect width="130" height="90" rx="10" fill="#161b22" stroke="#C7131F" stroke-width="1.5"/>
+    <rect x="0" y="0" width="130" height="30" rx="10" fill="url(#cogGrad)"/>
+    <rect x="0" y="20" width="130" height="12" fill="url(#cogGrad)"/>
+    <text x="65" y="20" text-anchor="middle" fill="white" font-size="11" font-weight="700">Amazon Cognito</text>
+    <text x="65" y="50" text-anchor="middle" font-size="18">🔐</text>
+    <text x="65" y="68" text-anchor="middle" fill="#8b949e" font-size="9">User Pool · JWT</text>
+    <text x="65" y="80" text-anchor="middle" fill="#8b949e" font-size="9">SRP Auth · 1hr token</text>
+  </g>
+
+  <!-- ==================== LAMBDA FUNCTIONS ==================== -->
+  <!-- Lambda container box -->
+  <rect x="580" y="100" width="200" height="330" rx="12" fill="#1c2128" stroke="#FF9900" stroke-width="1" stroke-dasharray="5,3"/>
+  <text x="680" y="122" text-anchor="middle" fill="#FF9900" font-size="11" font-weight="600">AWS Lambda</text>
+
+  <!-- Lambda 1: Shorten -->
+  <g transform="translate(592, 132)" filter="url(#shadow)">
+    <rect width="176" height="58" rx="8" fill="#21262d" stroke="#FF9900" stroke-width="1"/>
+    <text x="12" y="20" fill="#FF9900" font-size="14">λ</text>
+    <text x="32" y="19" fill="#e6edf3" font-size="10" font-weight="600">ShortenFunction</text>
+    <text x="32" y="31" fill="#8b949e" font-size="9">POST /shorten</text>
+    <text x="32" y="43" fill="#8b949e" font-size="9">Create short code · Write DDB</text>
+    <rect x="148" y="8" width="20" height="12" rx="3" fill="#0d419d"/>
+    <text x="158" y="18" text-anchor="middle" fill="#79c0ff" font-size="7">256MB</text>
+  </g>
+
+  <!-- Lambda 2: Redirect -->
+  <g transform="translate(592, 202)" filter="url(#shadow)">
+    <rect width="176" height="58" rx="8" fill="#21262d" stroke="#FF9900" stroke-width="1"/>
+    <text x="12" y="20" fill="#FF9900" font-size="14">λ</text>
+    <text x="32" y="19" fill="#e6edf3" font-size="10" font-weight="600">RedirectFunction</text>
+    <text x="32" y="31" fill="#8b949e" font-size="9">GET /r/{"{shortCode}"}</text>
+    <text x="32" y="43" fill="#8b949e" font-size="9">301 Redirect · Log click async</text>
+    <rect x="148" y="8" width="20" height="12" rx="3" fill="#0d419d"/>
+    <text x="158" y="18" text-anchor="middle" fill="#79c0ff" font-size="7">128MB</text>
+  </g>
+
+  <!-- Lambda 3: Analytics -->
+  <g transform="translate(592, 272)" filter="url(#shadow)">
+    <rect width="176" height="58" rx="8" fill="#21262d" stroke="#FF9900" stroke-width="1"/>
+    <text x="12" y="20" fill="#FF9900" font-size="14">λ</text>
+    <text x="32" y="19" fill="#e6edf3" font-size="10" font-weight="600">AnalyticsFunction</text>
+    <text x="32" y="31" fill="#8b949e" font-size="9">GET /analytics/{"{shortCode}"}</text>
+    <text x="32" y="43" fill="#8b949e" font-size="9">Aggregate clicks · Charts data</text>
+    <rect x="148" y="8" width="20" height="12" rx="3" fill="#0d419d"/>
+    <text x="158" y="18" text-anchor="middle" fill="#79c0ff" font-size="7">256MB</text>
+  </g>
+
+  <!-- Lambda 4: List -->
+  <g transform="translate(592, 342)" filter="url(#shadow)">
+    <rect width="176" height="58" rx="8" fill="#21262d" stroke="#FF9900" stroke-width="1"/>
+    <text x="12" y="20" fill="#FF9900" font-size="14">λ</text>
+    <text x="32" y="19" fill="#e6edf3" font-size="10" font-weight="600">ListFunction</text>
+    <text x="32" y="31" fill="#8b949e" font-size="9">GET /urls</text>
+    <text x="32" y="43" fill="#8b949e" font-size="9">User's URLs · GSI query</text>
+    <rect x="148" y="8" width="20" height="12" rx="3" fill="#0d419d"/>
+    <text x="158" y="18" text-anchor="middle" fill="#79c0ff" font-size="7">256MB</text>
+  </g>
+
+  <!-- ==================== DYNAMODB ==================== -->
+  <!-- DDB: URLs Table -->
+  <g transform="translate(840, 200)" filter="url(#shadow)">
+    <rect width="120" height="100" rx="10" fill="#161b22" stroke="#4053D6" stroke-width="1.5"/>
+    <rect x="0" y="0" width="120" height="30" rx="10" fill="url(#dynGrad)"/>
+    <rect x="0" y="20" width="120" height="12" fill="url(#dynGrad)"/>
+    <text x="60" y="20" text-anchor="middle" fill="white" font-size="10" font-weight="700">DynamoDB</text>
+    <text x="60" y="48" text-anchor="middle" font-size="16">🗄️</text>
+    <text x="60" y="66" text-anchor="middle" fill="#e6edf3" font-size="9" font-weight="600">URLs Table</text>
+    <text x="60" y="78" text-anchor="middle" fill="#8b949e" font-size="8">PK: shortCode</text>
+    <text x="60" y="90" text-anchor="middle" fill="#8b949e" font-size="8">TTL · Encryption</text>
+  </g>
+
+  <!-- DDB: Analytics Table -->
+  <g transform="translate(840, 330)" filter="url(#shadow)">
+    <rect width="120" height="100" rx="10" fill="#161b22" stroke="#4053D6" stroke-width="1.5"/>
+    <rect x="0" y="0" width="120" height="30" rx="10" fill="url(#dynGrad)"/>
+    <rect x="0" y="20" width="120" height="12" fill="url(#dynGrad)"/>
+    <text x="60" y="20" text-anchor="middle" fill="white" font-size="10" font-weight="700">DynamoDB</text>
+    <text x="60" y="48" text-anchor="middle" font-size="16">📊</text>
+    <text x="60" y="66" text-anchor="middle" fill="#e6edf3" font-size="9" font-weight="600">Analytics Table</text>
+    <text x="60" y="78" text-anchor="middle" fill="#8b949e" font-size="8">PK: shortCode</text>
+    <text x="60" y="90" text-anchor="middle" fill="#8b949e" font-size="8">SK: CLICK#ts#id</text>
+  </g>
+
+  <!-- ==================== CLOUDWATCH ==================== -->
+  <g transform="translate(620, 480)" filter="url(#shadow)">
+    <rect width="160" height="90" rx="10" fill="#161b22" stroke="#E7157B" stroke-width="1.5"/>
+    <rect x="0" y="0" width="160" height="28" rx="10" fill="url(#cwGrad)"/>
+    <rect x="0" y="18" width="160" height="12" fill="url(#cwGrad)"/>
+    <text x="80" y="18" text-anchor="middle" fill="white" font-size="10" font-weight="700">CloudWatch + X-Ray</text>
+    <text x="80" y="46" text-anchor="middle" font-size="16">📈</text>
+    <text x="80" y="64" text-anchor="middle" fill="#8b949e" font-size="8">Dashboards · Alarms</text>
+    <text x="80" y="76" text-anchor="middle" fill="#8b949e" font-size="8">Distributed Tracing · SNS alerts</text>
+  </g>
+
+  <!-- SAM/CloudFormation badge -->
+  <g transform="translate(840, 480)">
+    <rect width="120" height="90" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <text x="60" y="30" text-anchor="middle" font-size="16">📜</text>
+    <text x="60" y="50" text-anchor="middle" fill="#e6edf3" font-size="10" font-weight="600">AWS SAM</text>
+    <text x="60" y="64" text-anchor="middle" fill="#8b949e" font-size="8">CloudFormation IaC</text>
+    <text x="60" y="76" text-anchor="middle" fill="#8b949e" font-size="8">1-command deploy</text>
+  </g>
+
+  <!-- ==================== ARROWS ==================== -->
+  <!-- User → CloudFront -->
+  <line x1="120" y1="320" x2="188" y2="305" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
+  <text x="152" y="310" fill="#58a6ff" font-size="8" text-anchor="middle">HTTPS</text>
+
+  <!-- CloudFront → S3 -->
+  <line x1="245" y1="260" x2="245" y2="212" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arrow-green)" opacity="0.7"/>
+  <text x="255" y="240" fill="#3fb950" font-size="8">OAC</text>
+
+  <!-- CloudFront → API Gateway -->
+  <line x1="300" y1="305" x2="378" y2="305" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
+  <text x="340" y="297" fill="#58a6ff" font-size="8" text-anchor="middle">API calls</text>
+
+  <!-- Cognito ↔ API Gateway -->
+  <line x1="445" y1="210" x2="445" y2="258" stroke="#a371f7" stroke-width="1.5" marker-end="url(#arrow-purple)" opacity="0.7" stroke-dasharray="4,2"/>
+  <text x="455" y="238" fill="#a371f7" font-size="8">JWT</text>
+
+  <!-- API Gateway → Lambda functions -->
+  <line x1="510" y1="295" x2="588" y2="196" stroke="#FF9900" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6" stroke-dasharray="none"/>
+  <line x1="510" y1="305" x2="588" y2="231" stroke="#FF9900" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="510" y1="310" x2="588" y2="301" stroke="#FF9900" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+  <line x1="510" y1="318" x2="588" y2="371" stroke="#FF9900" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.6"/>
+
+  <!-- Lambda → DynamoDB URLs -->
+  <line x1="768" y1="200" x2="838" y2="256" stroke="#4053D6" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
+  <line x1="768" y1="231" x2="838" y2="265" stroke="#4053D6" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
+  <line x1="768" y1="300" x2="838" y2="282" stroke="#4053D6" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
+  <line x1="768" y1="370" x2="838" y2="295" stroke="#4053D6" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
+
+  <!-- Lambda (Redirect) → Analytics Table -->
+  <line x1="768" y1="250" x2="838" y2="355" stroke="#4053D6" stroke-width="1.2" marker-end="url(#arrow)" opacity="0.5" stroke-dasharray="4,2"/>
+  <text x="808" y="308" fill="#4053D6" font-size="7">async</text>
+
+  <!-- Lambda → CloudWatch -->
+  <line x1="680" y1="430" x2="700" y2="478" stroke="#E7157B" stroke-width="1.2" marker-end="url(#arrow)" opacity="0.6" stroke-dasharray="3,2"/>
+
+  <!-- Legend -->
+  <g transform="translate(72, 610)">
+    <line x1="0" y1="6" x2="24" y2="6" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="30" y="10" fill="#8b949e" font-size="9">User request / API call</text>
+    <line x1="150" y1="6" x2="174" y2="6" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+    <text x="180" y="10" fill="#8b949e" font-size="9">Static asset delivery</text>
+    <line x1="310" y1="6" x2="334" y2="6" stroke="#a371f7" stroke-width="1.5" marker-end="url(#arrow-purple)" stroke-dasharray="4,2"/>
+    <text x="340" y="10" fill="#8b949e" font-size="9">Auth token validation</text>
+    <line x1="480" y1="6" x2="504" y2="6" stroke="#FF9900" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="510" y="10" fill="#8b949e" font-size="9">Lambda invocation</text>
+    <line x1="640" y1="6" x2="664" y2="6" stroke="#4053D6" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="670" y="10" fill="#8b949e" font-size="9">DynamoDB read/write</text>
+  </g>
+</svg>
