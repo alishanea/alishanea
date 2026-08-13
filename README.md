@@ -11,7 +11,7 @@
 ║   > Cloud Engineer · AWS · Azure · DevOps                    ║
 ║                                                              ║
 ║   $ uptime                                                   ║
-║   > Final Year B.Tech · Cloud Computing                      ║
+║   > B.Tech Graduate · Cloud Computing                      ║
 ║                                                              ║
 ║   $ status                                                   ║
 ║   > Open to opportunities ●                                  ║
